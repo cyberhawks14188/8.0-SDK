@@ -22,7 +22,7 @@ public class OdometryCode {
         ChangeParaLeftEncoder = LastParaLeftEncoder - ParaLeftEncoder;
         ChangeParaRightEncoder = LastParaRightEncoder - ParaRightEncoder;
         ChangePerpEncoder = LastPerpEncoder - PerpEncoder;
-        
+        //test
         
         
         LastParaLeftEncoder = ParaleftEncoder;
