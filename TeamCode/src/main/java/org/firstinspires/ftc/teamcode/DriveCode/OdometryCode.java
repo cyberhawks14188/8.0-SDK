@@ -14,9 +14,9 @@ public class OdometryCode {
     double ChangePerpEncoder;
     double ChangeParaCombined = 0;
     double ChangePerpCombined = 0;
-    static double TicksToInches = 236.5;
-    public double TrackWidth = 12.5;
-    public double PerpOffset = 6.25;
+    public double TicksToInches = 1775;
+    public double TrackWidth = 9.13;
+    public double PerpOffset = 4.75;
     double ChangeHeading = 0;
     public double HeadingRAD = 0;
     public double HeadingDEG = 0;
@@ -25,13 +25,14 @@ public class OdometryCode {
     public double ParaDist = 0;
     public double PerpDist = 0;
 
+
     public void OdoCalc(double RAWparallelLeftEncoder, double RAWPerpendicularEncoder, double RAWparallelRightEncoder){
 
 
 
         ParaLeftEncoder = RAWparallelLeftEncoder/TicksToInches;
         ParaRightEncoder = -RAWparallelRightEncoder/TicksToInches;
-        PerpEncoder = RAWPerpendicularEncoder/TicksToInches;
+        PerpEncoder = -RAWPerpendicularEncoder/TicksToInches;
 
         ChangeParaLeftEncoder = LastParaLeftEncoder - ParaLeftEncoder;
         ChangeParaRightEncoder = LastParaRightEncoder - ParaRightEncoder;
@@ -45,6 +46,9 @@ public class OdometryCode {
 
         HeadingRAD += ChangeHeading;
         HeadingDEG = Math.toDegrees(HeadingRAD);
+       /* if(HeadingDEG < 0){
+            HeadingDEG = HeadingDEG + 360;
+        }*/
 
         ChangePara = ChangeParaCombined * Math.cos(HeadingRAD) - ChangePerpCombined * Math.sin(HeadingRAD);
         ChangePerp = ChangeParaCombined * Math.sin(HeadingRAD) + ChangePerpCombined * Math.cos(HeadingRAD);
