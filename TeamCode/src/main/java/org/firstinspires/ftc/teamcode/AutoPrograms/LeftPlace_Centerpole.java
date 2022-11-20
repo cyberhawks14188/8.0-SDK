@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.AutoPrograms;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -25,9 +26,9 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import java.util.ArrayList;
 
 @Config
-@TeleOp
+@Autonomous
 
-public class LeftPlaceCenterpole extends LinearOpMode {
+public class LeftPlace_Centerpole extends LinearOpMode {
 
     TestHardware robot = new TestHardware();
     OdometryCode ODO = new OdometryCode();
@@ -298,7 +299,7 @@ public class LeftPlaceCenterpole extends LinearOpMode {
             }else if(action == 8){
                 speedSet = 15;
                 if(tagOfInterest.id == 1) {
-                    paraSet = 31;
+                    paraSet = 30;
                     perpSet = -20;
                     paraStart = 31;
                     perpStart = 42;
@@ -310,7 +311,7 @@ public class LeftPlaceCenterpole extends LinearOpMode {
                         oneloop = true;
                     }
                 }else if(tagOfInterest.id == 2){
-                    paraSet = 31;
+                    paraSet = 30;
                     perpSet = 3;
                     paraStart = 31;
                     perpStart = 42;
@@ -322,7 +323,7 @@ public class LeftPlaceCenterpole extends LinearOpMode {
                         oneloop = true;
                     }
                 }else{
-                    paraSet = 31;
+                    paraSet = 30;
                     perpSet = 28;
                     paraStart = 31;
                     perpStart = 42;

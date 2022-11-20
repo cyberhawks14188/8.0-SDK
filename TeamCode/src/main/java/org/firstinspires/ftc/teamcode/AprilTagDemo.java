@@ -34,7 +34,7 @@ import org.openftc.easyopencv.OpenCvInternalCamera2;
 
 import java.util.ArrayList;
 
-@TeleOp
+//@TeleOp
 public class AprilTagDemo extends LinearOpMode
 {
     OpenCvCamera camera;

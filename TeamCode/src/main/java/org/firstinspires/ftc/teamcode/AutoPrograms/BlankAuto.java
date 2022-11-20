@@ -25,7 +25,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import java.util.ArrayList;
 
 @Config
-@TeleOp
+//@TeleOp
 
 public class BlankAuto extends LinearOpMode {
 

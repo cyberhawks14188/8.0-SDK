@@ -74,7 +74,7 @@ public class TeleOp extends LinearOpMode {
         while (opModeIsActive()) {
             SpeedClass.SpeedCalc(1,0, 0, 0, ODO.ParaDist, ODO.PerpDist, getRuntime());
 
-            if( gamepad1.right_stick_button){
+            if( gamepad1.back){
                 ODO.HeadingRAD = Math.toRadians(0);
                 headingsetpoint = 0;
             }
@@ -141,7 +141,7 @@ public class TeleOp extends LinearOpMode {
 
             //intake code
             
-            if(gamepad1.a){
+            if(gamepad1.a || gamepad1.left_trigger > .05){
                 robot.IntakeS.setPower(.5);
             }else if(gamepad1.b){
                 robot.IntakeS.setPower(-.5);
@@ -161,21 +161,22 @@ public class TeleOp extends LinearOpMode {
 
             //drive code
 
-            x = Smoothing.SmoothPerpendicularInput(Math.copySign(gamepad1.left_stick_x, gamepad1.left_stick_x * gamepad1.left_stick_x * gamepad1.left_stick_x));
-            y = -Smoothing.SmoothParallelInput(Math.copySign(gamepad1.left_stick_y, gamepad1.left_stick_y * gamepad1.left_stick_y * gamepad1.left_stick_y));
+            x = Smoothing.SmoothPerpendicularInput(Math.copySign(gamepad1.left_stick_x * gamepad1.left_stick_x, gamepad1.left_stick_x));
+
+            y = -Smoothing.SmoothParallelInput(Math.copySign(gamepad1.left_stick_y * gamepad1.left_stick_y, gamepad1.left_stick_y));
             //z = gamepad1.right_stick_x;
-
-            //defines the vector
-            //angle should output 0-360 deg
-
-            vectorMagnitude = Math.sqrt((y * y) + (x * x));
-            vectorAngleRAD = Math.atan2(y, x);
-            vectorAngleDEG = -Math.toDegrees(vectorAngleRAD);
             if (vectorAngleDEG < 0) {
                 vectorAngleDEG = vectorAngleDEG + 360;
             }
 
-            //add in angle offset
+            //defines the vector
+            //angle should output 0-360 deg
+            vectorMagnitude = Math.sqrt((y * y) + (x * x));//hypotenuse of the joysticks
+            vectorAngleRAD = Math.atan2(y, x);//angle of the joystick inputs in Radians
+            vectorAngleDEG = -Math.toDegrees(vectorAngleRAD);//converts that into degrees
+
+
+            //Subtracts the heading angle to create the virtual forward
             finalvectorAngleDEG = vectorAngleDEG - ODO.HeadingDEG;
 
             //convert back into x and y values
@@ -185,14 +186,15 @@ public class TeleOp extends LinearOpMode {
             if(gamepad1.right_bumper){
                 drivespeed = .4;
                 if(!gamepad1.left_bumper){
-                    headingsetpoint += Smoothing.SmoothHeadingInput(Math.copySign(gamepad1.right_stick_x, gamepad1.right_stick_x * gamepad1.right_stick_x * gamepad1.right_stick_x)) * 3;
+                    headingsetpoint += Smoothing.SmoothHeadingInput(Math.copySign(gamepad1.right_stick_x * gamepad1.right_stick_x, gamepad1.right_stick_x)) * 2.5;
                 }
             }else if(gamepad1.right_trigger > .1) {
                 drivespeed = 1;
+                headingsetpoint += Smoothing.SmoothHeadingInput(Math.copySign(gamepad1.right_stick_x * gamepad1.right_stick_x, gamepad1.right_stick_x)) * 5;
             }else{
-                drivespeed = .625;
+                drivespeed = .7;
                 if(!gamepad1.left_bumper){
-                    headingsetpoint += Smoothing.SmoothHeadingInput(Math.copySign(gamepad1.right_stick_x, gamepad1.right_stick_x * gamepad1.right_stick_x * gamepad1.right_stick_x)) * 6;
+                    headingsetpoint += Smoothing.SmoothHeadingInput(Math.copySign(gamepad1.right_stick_x * gamepad1.right_stick_x, gamepad1.right_stick_x)) * 5;
                 }
             }
 

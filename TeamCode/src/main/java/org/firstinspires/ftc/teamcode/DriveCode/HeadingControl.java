@@ -32,7 +32,7 @@ public class HeadingControl {
 
         if(Math.abs(headingsetpoint - currentheading) < 15){
             speedSetHeading = speedSetHeading * (Math.abs(headingsetpoint - currentheading)/ 15);
-            inmotionprofileheading = 11111.11111111111111111111111;
+
         }else{
             inmotionprofileheading = 0;
         }

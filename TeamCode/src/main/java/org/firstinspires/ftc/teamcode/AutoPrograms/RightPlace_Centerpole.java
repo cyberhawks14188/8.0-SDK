@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.AutoPrograms;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -25,26 +26,35 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import java.util.ArrayList;
 
 @Config
-//@TeleOp
+@Autonomous
 
-public class StraitTest extends LinearOpMode {
+public class RightPlace_Centerpole extends LinearOpMode {
 
     TestHardware robot = new TestHardware();
     OdometryCode ODO = new OdometryCode();
-    LiftControl lift = new LiftControl();
+    LiftControl Lift = new LiftControl();
     HeadingControl HDing = new HeadingControl();
     Smoothing Smoothing = new Smoothing();
     DrivetrainControl DriveControl = new DrivetrainControl();
     DirectionCalc DirectionCalc = new DirectionCalc();
     SpeedClass SpeedClass = new SpeedClass();
 
-    double action = 2;
-    public static double SPEEDP = 0.002;
-    public static double SPEEDD = 0.004;
-    public static double SPEEDSET = 10;
-    public static double RAMPDOWNDIST = 4;
-    public static double RAMPUPDIST = 2;
+    //variables for the autonomous
+
+    double action = 1;
     boolean oneloop = false;
+
+    double paraSet = 0, perpSet = 0;
+    double paraStart = 0, perpStart = 0;
+    double speedSet = 15;
+    double rampUpDist = 2, rampDownDist = 4;
+    double headingSet = 0, headingSpeedSet = 100;
+    double liftSet = 0, liftSpeedSet = 1500;
+    double time1 = 0;
+
+
+
+    //AprilTag initialaization here
 
     OpenCvCamera camera;
     AprilTagDetectionPipeline aprilTagDetectionPipeline;
@@ -76,19 +86,15 @@ public class StraitTest extends LinearOpMode {
 
     public void runOpMode() {
 
-        SpeedClass.speedP = SPEEDP;
-        SpeedClass.speedD = SPEEDD;
-
-
+        //initializes FTC dahsboard
         FtcDashboard dashboard = FtcDashboard.getInstance();
         Telemetry dashboardTelemetry = dashboard.getTelemetry();
 
 
-
+        //initialized the hardware map
         robot.init(hardwareMap);
 
-
-        waitForStart();
+        //initilaize the camera for the Apriltags
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
         aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
@@ -111,10 +117,7 @@ public class StraitTest extends LinearOpMode {
 
         telemetry.setMsTransmissionInterval(50);
 
-        /*
-         * The INIT-loop:
-         * This REPLACES waitForStart!
-         */
+        // while init loop for the apriltags
         while (!isStarted() && !isStopRequested())
         {
             ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
@@ -169,10 +172,13 @@ public class StraitTest extends LinearOpMode {
                 }
 
             }
-
+            telemetry.addData("in init", 0);
             telemetry.update();
             sleep(20);
         }
+
+        //start of init
+        waitForStart();
 
         /*
          * The START command just came in: now work off the latest snapshot acquired
@@ -200,32 +206,145 @@ public class StraitTest extends LinearOpMode {
         }else{
             //trajectory
         }
+
+        //the auto loop
         while (opModeIsActive()) {
-            if(gamepad1.a){
-                action = 1;
-            }else if (gamepad1.b){
-                action = 2;
-            }
-
-
             ODO.OdoCalc(robot.MotorVL.getCurrentPosition(), robot.MotorHL.getCurrentPosition(), robot.MotorVR.getCurrentPosition());
 
-            if(action == 1){
-                Drivetrain(60, 0, 0, 0, SPEEDSET, RAMPUPDIST,RAMPDOWNDIST, 0, 100, ODO.ParaDist, ODO.PerpDist, ODO.HeadingDEG, getRuntime());
-                if(DirectionCalc.distanceFrom < 1 && oneloop){
-                    //action = 2;
+            if(action == 1){//move forward and push cone away
+                paraSet = 40;
+                perpSet = 0;
+                paraStart = 0;
+                perpStart = 0;
+
+                if(DirectionCalc.distanceFrom < 1 && HDing.headingError < 2 && oneloop){
+                    action = 1.5;
                     oneloop = false;
+                }else{
+                    oneloop = true;
                 }
-                oneloop = true;
-            }else if(action == 2){
-                Drivetrain(0, 0, 60, 0, SPEEDSET, RAMPUPDIST ,RAMPDOWNDIST, 0, 100, ODO.ParaDist, ODO.PerpDist, ODO.HeadingDEG, getRuntime());
 
+            }else if(action == 1.5){//back into the travel lane
+                paraSet = 30;
+                perpSet = 0;
+                paraStart = 40;
+                perpStart = 0;
+
+                if(DirectionCalc.distanceFrom < 1 && HDing.headingError < 2 && oneloop){
+                    action = 2;
+                    oneloop = false;
+                }else{
+                    oneloop = true;
+                }
             }
-
+            else if(action == 2){//strafe to align with center pole
+                paraSet = 31;
+                perpSet = -31;
+                paraStart = 30;
+                perpStart = 0;
+                if(DirectionCalc.distanceFrom < 1 && HDing.headingError < 2 && oneloop){
+                    action = 3;
+                    oneloop = false;
+                }else{
+                    oneloop = true;
+                }
+            }else if(action == 3){//lifts lift up
+                liftSet = 1480;
+                if(robot.MotorLift.getCurrentPosition() > 1400){
+                    action = 4;
+                }
+            }else if(action == 4){//moves above pole
+                speedSet = 5;
+                paraSet = 37;
+                perpSet = -31;
+                paraStart = 30;
+                perpStart = -31;
+                if(DirectionCalc.distanceFrom < 1 && HDing.headingError < 2 && oneloop){
+                    action = 4.5;
+                    oneloop = false;
+                    time1 = getRuntime();
+                }else{
+                    oneloop = true;
+                }
+            }else if(action == 4.5){//drops lift slightly to align cone better
+                liftSet = 1350;
+                if(robot.MotorLift.getCurrentPosition() < 1370){
+                    action = 5;
+                }
+            }
+            else if(action == 5){//releases cone
+                robot.IntakeS.setPower(-.5);
+                if(time1 + 2 < getRuntime()){
+                    action = 6;
+                    robot.IntakeS.setPower(0);
+                }
+            }else if(action == 6){//backs away from center pole
+                speedSet = 5;
+                paraSet = 31;
+                perpSet = -31;
+                paraStart = 37;
+                perpStart = -31;
+                if(DirectionCalc.distanceFrom < 1 && HDing.headingError < 2 && oneloop){
+                    action = 7;
+                    oneloop = false;
+                    time1 = getRuntime();
+                }else{
+                    oneloop = true;
+                }
+            }else if(action == 7){//drops the lift
+                liftSet = 0;
+                if(robot.MotorLift.getCurrentPosition() < 100){
+                    action = 8;
+                }
+            }else if(action == 8){//parks in the correct zone
+                speedSet = 15;
+                if(tagOfInterest.id == 1) {
+                    paraSet = 31;
+                    perpSet = -24;
+                    paraStart = 31;
+                    perpStart = -31;
+                    if(DirectionCalc.distanceFrom < 1 && oneloop){
+                        action = 9;
+                        oneloop = false;
+                        time1 = getRuntime();
+                    }else{
+                        oneloop = true;
+                    }
+                }else if(tagOfInterest.id == 2){
+                    paraSet = 31;
+                    perpSet = 3;
+                    paraStart = 31;
+                    perpStart = -31;
+                    if(DirectionCalc.distanceFrom < 1 && oneloop){
+                        action = 9;
+                        oneloop = false;
+                        time1 = getRuntime();
+                    }else{
+                        oneloop = true;
+                    }
+                }else{
+                    paraSet = 31;
+                    perpSet = 28;
+                    paraStart = 31;
+                    perpStart = -31;
+                    if(DirectionCalc.distanceFrom < 1 && oneloop){
+                        action = 9;
+                        oneloop = false;
+                        time1 = getRuntime();
+                    }else{
+                        oneloop = true;
+                    }
+                }
+            }else{
+                break;
+            }
+            Lift.LiftMethod(liftSet, liftSpeedSet, robot.MotorLift.getCurrentPosition(), getRuntime());
+            Drivetrain(paraSet, perpSet, paraStart, perpStart, speedSet, rampUpDist, rampDownDist, headingSet, headingSpeedSet, ODO.ParaDist, ODO.PerpDist, ODO.HeadingDEG, getRuntime());
             robot.MotorVL.setPower(LLDIR);
             robot.MotorVR.setPower(LRDIR);
             robot.MotorHL.setPower(RLDIR);
             robot.MotorHR.setPower(RRDIR);
+            robot.MotorLift.setPower(Lift.liftpower);
 
             telemetry.addData("robot speed", SpeedClass.currentSpeed);
             telemetry.addData("FinalX", FinalX);
