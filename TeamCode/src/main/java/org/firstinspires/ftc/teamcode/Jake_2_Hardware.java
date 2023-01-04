@@ -1,18 +1,12 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
-
-public class TestHardware {
+public class Jake_2_Hardware {
     // Motors and Servos
     public DcMotor MotorVL;//port0
     public DcMotor MotorVR;//port2
@@ -20,14 +14,14 @@ public class TestHardware {
     public DcMotor MotorHR;//port3
     public DcMotorEx MotorLift;
     public CRServo IntakeS;
-    public DistanceSensor Dist1;
+   /* public DistanceSensor Dist1;
     public DistanceSensor Dist2;
     public DistanceSensor Dist3;
     public DistanceSensor Dist4;
     public DistanceSensor Dist5;
     public DistanceSensor Dist6;
     public DistanceSensor Dist7;
-    public DistanceSensor Dist8;
+    public DistanceSensor Dist8;*/
 
 
     /*BNO055IMU imu;
@@ -91,7 +85,7 @@ public class TestHardware {
         MotorHR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         MotorLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-        Dist1 = testhardware.get(DistanceSensor.class, "Dist1");
+        /*Dist1 = testhardware.get(DistanceSensor.class, "Dist1");
         Dist2 = testhardware.get(DistanceSensor.class, "Dist2");
         Dist3 = testhardware.get(DistanceSensor.class, "Dist3");
         Dist4 = testhardware.get(DistanceSensor.class, "Dist4");
@@ -99,6 +93,6 @@ public class TestHardware {
         Dist6 = testhardware.get(DistanceSensor.class, "Dist6");
         Dist7 = testhardware.get(DistanceSensor.class, "Dist7");
         Dist8 = testhardware.get(DistanceSensor.class, "Dist8");
-
+*/
     }
 }

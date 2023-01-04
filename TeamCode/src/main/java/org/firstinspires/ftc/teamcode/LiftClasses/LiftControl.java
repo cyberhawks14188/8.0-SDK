@@ -9,8 +9,15 @@ public class LiftControl {
     double liftSpeedSet = 0;
     double liftSpeed, lastLiftSpeed, liftSpeedDifference = 0;
     public double liftP = .0001;
+    public boolean isJake2 = true; //true = Jake 2.0, false = Jake 1.0
 
     public void LiftMethod(double liftset, double liftspeedset, double liftcurrentpos, double time){
+        if(isJake2){
+            liftP = .0001;
+        }else{
+            liftP = .0001;
+        }
+
         currentTime = time;
         liftPos = liftcurrentpos;
 

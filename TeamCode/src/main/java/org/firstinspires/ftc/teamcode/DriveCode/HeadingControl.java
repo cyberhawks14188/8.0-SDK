@@ -1,6 +1,9 @@
 package org.firstinspires.ftc.teamcode.DriveCode;
 
+import org.firstinspires.ftc.teamcode.LiftClasses.LiftControl;
+
 public class HeadingControl {
+    LiftControl Lift = new LiftControl();
     double lastHeading = 0;
     double deltaHeading = 0;
     double directionHeading = 1;
@@ -16,10 +19,17 @@ public class HeadingControl {
     public double headingError = 0;
 
     public void HeadingMethod(double headingsetpoint, double headingspeedsetpoint, double currentheading, double time){
+     /*   if(!Lift.isJake2){
+            headingP = .00004;
+            headingD = 0.002;
+        }else{
+            headingP = .00045;
+            headingD = 0.002;
+        }*/
 
         headingError = headingsetpoint - currentheading;
 
-       // if((headingsetpoint - currentheading) < 180)
+
         deltaHeading = currentheading - lastHeading;
 
         if(headingsetpoint > currentheading){
@@ -30,8 +40,8 @@ public class HeadingControl {
 
         speedSetHeading = Math.copySign(headingspeedsetpoint, directionHeading);
 
-        if(Math.abs(headingsetpoint - currentheading) < 15){
-            speedSetHeading = speedSetHeading * (Math.abs(headingsetpoint - currentheading)/ 15);
+        if(Math.abs(headingsetpoint - currentheading) < 30){
+            speedSetHeading = speedSetHeading * (Math.abs(headingsetpoint - currentheading)/ 30);
 
         }else{
             inmotionprofileheading = 0;
@@ -54,3 +64,5 @@ public class HeadingControl {
         lastTime = time;
     }
 }
+
+

@@ -1,7 +1,13 @@
 package org.firstinspires.ftc.teamcode.DriveCode;
 
+import org.firstinspires.ftc.teamcode.LiftClasses.LiftControl;
+
+
+
 public class OdometryCode {
     //test
+
+    LiftControl lift = new LiftControl();
 
     public double ParaLeftEncoder = 0;
     public double ParaRightEncoder = 0;
@@ -26,13 +32,28 @@ public class OdometryCode {
     public double PerpDist = 0;
 
 
+
+
     public void OdoCalc(double RAWparallelLeftEncoder, double RAWPerpendicularEncoder, double RAWparallelRightEncoder){
+        /*if(!lift.isJake2){
+            TicksToInches = 1775;
+            TrackWidth = 9.13;
+            PerpOffset = 4.75;
+            ParaLeftEncoder = RAWparallelLeftEncoder/TicksToInches;
+            ParaRightEncoder = -RAWparallelRightEncoder/TicksToInches;
+            PerpEncoder = -RAWPerpendicularEncoder/TicksToInches;
+        }else{
+            TicksToInches = 1825;
+            TrackWidth = 8.35;
+            PerpOffset = 4.75;
+            ParaLeftEncoder = -RAWparallelLeftEncoder/TicksToInches;
+            ParaRightEncoder = RAWparallelRightEncoder/TicksToInches;
+            PerpEncoder = RAWPerpendicularEncoder/TicksToInches;
+        }*/
 
-
-
-        ParaLeftEncoder = RAWparallelLeftEncoder/TicksToInches;
-        ParaRightEncoder = -RAWparallelRightEncoder/TicksToInches;
-        PerpEncoder = -RAWPerpendicularEncoder/TicksToInches;
+        ParaLeftEncoder = -RAWparallelLeftEncoder/TicksToInches;
+        ParaRightEncoder = RAWparallelRightEncoder/TicksToInches;
+        PerpEncoder = RAWPerpendicularEncoder/TicksToInches;
 
         ChangeParaLeftEncoder = LastParaLeftEncoder - ParaLeftEncoder;
         ChangeParaRightEncoder = LastParaRightEncoder - ParaRightEncoder;

@@ -11,17 +11,16 @@ import org.firstinspires.ftc.teamcode.DriveCode.OdometryCode;
 import org.firstinspires.ftc.teamcode.DriveCode.Smoothing;
 import org.firstinspires.ftc.teamcode.DriveCode.SpeedClass;
 import org.firstinspires.ftc.teamcode.LiftClasses.LiftControl;
-import org.firstinspires.ftc.teamcode.TestHardware;
 
 @Config
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp
 
-public class TeleOp extends LinearOpMode {
+public class Jake_2_TeleOp extends LinearOpMode {
 //test
-    public static double tickstoin = 1775;
-    public static double Trackwidth = 9.13;
+    public static double tickstoin = 1825;
+    public static double Trackwidth = 8.35;
     public static double VertOffset = 4.75;
-    public static double zP = .00004;
+    public static double zP = .0006;
     public static double zD = 0.002;
 
     double x, y, z;
@@ -48,7 +47,7 @@ public class TeleOp extends LinearOpMode {
 
 
 
-    TestHardware robot = new TestHardware();
+    Jake_2_Hardware robot = new Jake_2_Hardware();
     OdometryCode ODO = new OdometryCode();
     LiftControl lift = new LiftControl();
     HeadingControl HDing = new HeadingControl();
@@ -72,7 +71,7 @@ public class TeleOp extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            lift.isJake2 = false;
+            lift.isJake2 = true;
             SpeedClass.SpeedCalc(1,0, 0, 0, ODO.ParaDist, ODO.PerpDist, getRuntime());
 
             if( gamepad1.back){
@@ -84,6 +83,7 @@ public class TeleOp extends LinearOpMode {
             ODO.TrackWidth = Trackwidth;
 
             ODO.OdoCalc(robot.MotorVL.getCurrentPosition(), robot.MotorHL.getCurrentPosition(), robot.MotorVR.getCurrentPosition());
+
             /*
             joysticks: used
             dpad: used
@@ -162,9 +162,9 @@ public class TeleOp extends LinearOpMode {
 
             //drive code
 
-            x = Smoothing.SmoothPerpendicularInput(Math.copySign(gamepad1.left_stick_x * gamepad1.left_stick_x, gamepad1.left_stick_x));
+            x = Smoothing.SmoothPerpendicularInput(Math.copySign( gamepad1.left_stick_x, gamepad1.left_stick_x));
 
-            y = -Smoothing.SmoothParallelInput(Math.copySign(gamepad1.left_stick_y * gamepad1.left_stick_y, gamepad1.left_stick_y));
+            y = -Smoothing.SmoothParallelInput(Math.copySign( gamepad1.left_stick_y, gamepad1.left_stick_y));
             //z = gamepad1.right_stick_x;
             if (vectorAngleDEG < 0) {
                 vectorAngleDEG = vectorAngleDEG + 360;
@@ -185,24 +185,27 @@ public class TeleOp extends LinearOpMode {
             finalY = vectorMagnitude * Math.sin(Math.toRadians(finalvectorAngleDEG));
 
             if(gamepad1.right_bumper){
-                drivespeed = .4;
+                drivespeed = .6;
                 if(!gamepad1.left_bumper){
-                    headingsetpoint += Smoothing.SmoothHeadingInput(Math.copySign(gamepad1.right_stick_x * gamepad1.right_stick_x, gamepad1.right_stick_x)) * 2.5;
+                    headingsetpoint += gamepad1.right_stick_x * 3;
                 }
             }else if(gamepad1.right_trigger > .1) {
                 drivespeed = 1;
-                headingsetpoint += Smoothing.SmoothHeadingInput(Math.copySign(gamepad1.right_stick_x * gamepad1.right_stick_x, gamepad1.right_stick_x)) * 5;
-            }else{
-                drivespeed = .7;
                 if(!gamepad1.left_bumper){
-                    headingsetpoint += Smoothing.SmoothHeadingInput(Math.copySign(gamepad1.right_stick_x * gamepad1.right_stick_x, gamepad1.right_stick_x)) * 5;
+                    headingsetpoint += gamepad1.right_stick_x * 14;
+                }
+            }else{
+                drivespeed = .8;
+                if(!gamepad1.left_bumper){
+                    headingsetpoint += gamepad1.right_stick_x * 6;
                 }
             }
 
             HDing.headingP = zP;
             HDing.headingD = zD;
 
-            HDing.HeadingMethod(headingsetpoint, 350, ODO.HeadingDEG, getRuntime());
+
+            HDing.HeadingMethod(headingsetpoint, 500, ODO.HeadingDEG, getRuntime());
 
             z = HDing.headingPower;
 
@@ -223,7 +226,11 @@ public class TeleOp extends LinearOpMode {
 
             dashboardTelemetry.addData("heading", ODO.HeadingDEG);
             dashboardTelemetry.addData("headingSet", headingsetpoint);
+            dashboardTelemetry.addData("heading Speed", HDing.headingCurrentSpeed);
             dashboardTelemetry.update();
+            telemetry.addData("right encoder RAW", robot.MotorVR.getCurrentPosition());
+            telemetry.addData("Left encoder RAW", robot.MotorVL.getCurrentPosition());
+            telemetry.addData("back encoder RAW", robot.MotorHL.getCurrentPosition());
 
             telemetry.addData("speed", SpeedClass.currentSpeed);
             telemetry.addData("heading current speed", HDing.headingCurrentSpeed);

@@ -5,7 +5,6 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -28,7 +27,7 @@ import java.util.ArrayList;
 @Config
 @Autonomous
 
-public class LeftPlace_Centerpole extends LinearOpMode {
+public class Jake_BlankAuto extends LinearOpMode {
 
     TestHardware robot = new TestHardware();
     OdometryCode ODO = new OdometryCode();
