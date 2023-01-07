@@ -3,17 +3,17 @@ package org.firstinspires.ftc.teamcode.LiftClasses;
 public class LiftControl {
     public double liftpower = 0;
     double currentTime = 0, lastTime = 0;
-    double liftPos = 0, lastliftpos = 0, liftSet;
+    double liftPos = 0, lastliftpos = 0, liftSet, liftCalPower = 0;
     double deltaLiftPos = 0;
     double liftDirection = 1;
     double liftSpeedSet = 0;
-    double liftSpeed, lastLiftSpeed, liftSpeedDifference = 0;
+    public double liftSpeed, lastLiftSpeed, liftSpeedDifference = 0;
     public double liftP = .0001;
     public boolean isJake2 = true; //true = Jake 2.0, false = Jake 1.0
 
     public void LiftMethod(double liftset, double liftspeedset, double liftcurrentpos, double time){
         if(isJake2){
-            liftP = .0001;
+            liftP = .0003;
         }else{
             liftP = .0001;
         }
@@ -21,19 +21,21 @@ public class LiftControl {
         currentTime = time;
         liftPos = liftcurrentpos;
 
-        if(liftset > 1490){
-            liftSet = 1490;
+        if(liftset > 1150){
+            liftSet = 1150;
         }else if(liftset < 0){
             liftSet = 0;
         }else{
             liftSet = liftset;
         }
 
+
+
         deltaLiftPos = liftPos - lastliftpos;
 
-        if(liftset > liftPos){
+        if(liftSet > liftPos){
             liftDirection = 1;
-        }else if(liftset < liftPos){
+        }else if(liftSet < liftPos){
             liftDirection = -1;
         }
 
@@ -47,7 +49,9 @@ public class LiftControl {
 
         liftSpeedDifference = liftSpeedSet - liftSpeed;
 
-        liftpower += (liftSpeedDifference * liftP);
+        liftCalPower += (liftSpeedDifference * liftP);
+
+        liftpower = -liftCalPower;
 
         if(liftpower > 1){
             liftpower = 1;

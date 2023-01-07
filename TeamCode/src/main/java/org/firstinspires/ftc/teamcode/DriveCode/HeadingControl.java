@@ -17,15 +17,16 @@ public class HeadingControl {
     double lastHeadingSpeedError = 0;
     public double headingD = 0.002;
     public double headingError = 0;
+    public boolean inTeleOp = false;
 
     public void HeadingMethod(double headingsetpoint, double headingspeedsetpoint, double currentheading, double time){
-     /*   if(!Lift.isJake2){
+        if(!Lift.isJake2){
             headingP = .00004;
             headingD = 0.002;
         }else{
-            headingP = .00045;
+            headingP = .0006;
             headingD = 0.002;
-        }*/
+        }
 
         headingError = headingsetpoint - currentheading;
 
@@ -53,11 +54,14 @@ public class HeadingControl {
 
         headingPower += (headingSpeedError* headingP) + ((headingSpeedError - lastHeadingSpeedError) * headingD);
 
-        if(headingPower > 1){
-            headingPower = 1;
-        }else if(headingPower < -1){
-            headingPower = -1;
+        if(inTeleOp == true){
+            if(headingPower > 1){
+                headingPower = 1;
+            }else if(headingPower < -1){
+                headingPower = -1;
+            }
         }
+
 
         lastHeading = currentheading;
         lastHeadingSpeedError = headingSpeedError;

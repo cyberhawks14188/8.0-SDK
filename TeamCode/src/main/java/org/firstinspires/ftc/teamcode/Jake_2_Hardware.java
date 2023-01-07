@@ -22,6 +22,7 @@ public class Jake_2_Hardware {
     public DistanceSensor Dist6;
     public DistanceSensor Dist7;
     public DistanceSensor Dist8;*/
+    public DistanceSensor IntakeV3;
 
 
     /*BNO055IMU imu;
@@ -84,6 +85,8 @@ public class Jake_2_Hardware {
         MotorHL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         MotorHR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         MotorLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
+        IntakeV3 = testhardware.get(DistanceSensor.class, "IntakeV3");
 
         /*Dist1 = testhardware.get(DistanceSensor.class, "Dist1");
         Dist2 = testhardware.get(DistanceSensor.class, "Dist2");

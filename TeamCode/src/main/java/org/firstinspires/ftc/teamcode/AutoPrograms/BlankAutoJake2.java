@@ -1,13 +1,26 @@
 package org.firstinspires.ftc.teamcode.AutoPrograms;
 
 
+import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
+import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
+import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XZY;
+import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
+import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
+import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.firstinspires.ftc.teamcode.AprilTagDetectionPipeline;
 import org.firstinspires.ftc.teamcode.DriveCode.DirectionCalc;
 import org.firstinspires.ftc.teamcode.DriveCode.DrivetrainControl;
@@ -15,21 +28,22 @@ import org.firstinspires.ftc.teamcode.DriveCode.HeadingControl;
 import org.firstinspires.ftc.teamcode.DriveCode.OdometryCode;
 import org.firstinspires.ftc.teamcode.DriveCode.Smoothing;
 import org.firstinspires.ftc.teamcode.DriveCode.SpeedClass;
+import org.firstinspires.ftc.teamcode.Jake_2_Hardware;
 import org.firstinspires.ftc.teamcode.LiftClasses.LiftControl;
-import org.firstinspires.ftc.teamcode.TestHardware;
 import org.openftc.apriltag.AprilTagDetection;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @Config
 @Autonomous
 
-public class Jake_BlankAuto extends LinearOpMode {
+public class BlankAutoJake2 extends LinearOpMode {
 
-    TestHardware robot = new TestHardware();
+    Jake_2_Hardware robot = new Jake_2_Hardware();
     OdometryCode ODO = new OdometryCode();
     LiftControl Lift = new LiftControl();
     HeadingControl HDing = new HeadingControl();
@@ -49,13 +63,15 @@ public class Jake_BlankAuto extends LinearOpMode {
     double rampUpDist = 2, rampDownDist = 4;
     double headingSet = 0, headingSpeedSet = 100;
     double liftSet = 0, liftSpeedSet = 1500;
-    double time1 = 0;
+    boolean vuforiatrigger = false;
+    double desiredVuforiaAngle = -32;
+    double vuforiaOffset = -100000000;
 
 
 
     //AprilTag initialaization here
 
-    OpenCvCamera camera;
+    OpenCvCamera APRILcamera;
     AprilTagDetectionPipeline aprilTagDetectionPipeline;
 
     static final double FEET_PER_METER = 3.28084;
@@ -79,12 +95,30 @@ public class Jake_BlankAuto extends LinearOpMode {
 
     AprilTagDetection tagOfInterest = null;
 
+    private static final String VUFORIA_KEY =
+            " AZickLn/////AAABmRdNRU8Vt0+EsSkecZ/dEtdwfmReQRmGjONFJw9IrZwj83V0JqVOw7lVMu8esNz/c2srCeQNiZSotXn5mKGHThTl4m0nN9xTmOVBgIkUOrtkA1rGeUkBw0dPy5AD8pk5L4Mv2yikiYUEXDVsPvVYjsp9p2+SHZNPXSBRL8OUPsUa+DpTQnpdRgtca4ZmRFGwUsfqkj/2pTz3/aS8KpFzZ6mjMVKJbJwiZnMhND5Bhy600+NNUNiTka0g6E+9lDEBQI5H0XVkEGCjHIFA0F8Z7L4iIZhotBPNB8kx3ep3MSRQSGg/yrzNIM4av2BqM2JVohuQFh2uSWyDJdgEwxtZ6drh3YZIa12CsuSHNkgaas2k ";
+
+    // Since ImageTarget trackables use mm to specifiy their dimensions, we must use mm for all the physical dimension.
+    // We will define some constants and conversions here
+    private static final float mmPerInch        = 25.4f;
+    private static final float mmTargetHeight   = 6 * mmPerInch;          // the height of the center of the target image above the floor
+    private static final float halfField        = 72 * mmPerInch;
+    private static final float halfTile         = 12 * mmPerInch;
+    private static final float oneAndHalfTile   = 36 * mmPerInch;
+
+    // Class Members
+    private OpenGLMatrix lastLocation   = null;
+    private VuforiaLocalizer vuforia    = null;
+    private VuforiaTrackables targets   = null ;
+    private WebcamName webcamName       = null;
+
+    private boolean targetVisible       = false;
+
 
 
     @Override
 
     public void runOpMode() {
-
         //initializes FTC dahsboard
         FtcDashboard dashboard = FtcDashboard.getInstance();
         Telemetry dashboardTelemetry = dashboard.getTelemetry();
@@ -93,18 +127,127 @@ public class Jake_BlankAuto extends LinearOpMode {
         //initialized the hardware map
         robot.init(hardwareMap);
 
-        //initilaize the camera for the Apriltags
+        //Vuforia Targets here
+        webcamName = hardwareMap.get(WebcamName.class, "LeftFacingCamera");
+
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+        // VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
+
+        parameters.vuforiaLicenseKey = VUFORIA_KEY;
+
+        // We also indicate which camera we wish to use.
+        parameters.cameraName = webcamName;
+
+        // Turn off Extended tracking.  Set this true if you want Vuforia to track beyond the target.
+        parameters.useExtendedTracking = false;
+
+        //  Instantiate the Vuforia engine
+        vuforia = ClassFactory.getInstance().createVuforia(parameters);
+
+        // Load the data sets for the trackable objects. These particular data
+        // sets are stored in the 'assets' part of our application.
+        targets = this.vuforia.loadTrackablesFromAsset("PowerPlay");
+
+        // For convenience, gather together all the trackable objects in one easily-iterable collection */
+        List<VuforiaTrackable> allTrackables = new ArrayList<VuforiaTrackable>();
+        allTrackables.addAll(targets);
+
+        // Name and locate each trackable object
+        identifyTarget(0, "Red Audience Wall",   -halfField,  -oneAndHalfTile, mmTargetHeight, 90, 0,  90);
+        identifyTarget(1, "Red Rear Wall",        halfField,  -oneAndHalfTile, mmTargetHeight, 90, 0, -90);
+        identifyTarget(2, "Blue Audience Wall",  -halfField,   oneAndHalfTile, mmTargetHeight, 90, 0,  90);
+        identifyTarget(3, "Blue Rear Wall",       halfField,   oneAndHalfTile, mmTargetHeight, 90, 0, -90);
+
+
+        final float CAMERA_FORWARD_DISPLACEMENT  = 0.0f * mmPerInch;   // eg: Enter the forward distance from the center of the robot to the camera lens
+        final float CAMERA_VERTICAL_DISPLACEMENT = 6.0f * mmPerInch;   // eg: Camera is 6 Inches above ground
+        final float CAMERA_LEFT_DISPLACEMENT     = 0.0f * mmPerInch;   // eg: Enter the left distance from the center of the robot to the camera lens
+
+        OpenGLMatrix cameraLocationOnRobot = OpenGLMatrix
+                .translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT)
+                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XZY, DEGREES, 90, 90, 0));
+
+        /**  Let all the trackable listeners know where the camera is.  */
+        for (VuforiaTrackable trackable : allTrackables) {
+            ((VuforiaTrackableDefaultListener) trackable.getListener()).setCameraLocationOnRobot(parameters.cameraName, cameraLocationOnRobot);
+        }
+
+
+        targets.activate();
+        while (vuforiatrigger == false && !isStopRequested()) {
+            if(gamepad1.back){
+                vuforiatrigger = true;
+            }
+
+            // check all the trackable targets to see which one (if any) is visible.
+            targetVisible = false;
+            for (VuforiaTrackable trackable : allTrackables) {
+                if (((VuforiaTrackableDefaultListener)trackable.getListener()).isVisible()) {
+                    telemetry.addData("Visible Target", trackable.getName());
+                    targetVisible = true;
+
+                    // getUpdatedRobotLocation() will return null if no new information is available since
+                    // the last time that call was made, or if the trackable is not currently visible.
+                    OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener)trackable.getListener()).getUpdatedRobotLocation();
+                    if (robotLocationTransform != null) {
+                        lastLocation = robotLocationTransform;
+                    }
+                    break;
+                }
+            }
+
+            // Provide feedback as to where the robot is located (if we know).
+            if (targetVisible) {
+                // express position (translation) of robot in inches.
+                VectorF translation = lastLocation.getTranslation();
+                telemetry.addData("Pos (inches)", "{X, Y, Z} = %.1f, %.1f, %.1f",
+                        translation.get(0) / mmPerInch, translation.get(1) / mmPerInch, translation.get(2) / mmPerInch);
+
+                // express the rotation of the robot in degrees.
+                Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
+                telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
+                vuforiaOffset = desiredVuforiaAngle - rotation.secondAngle;
+                telemetry.addData("VuforiaOffset", vuforiaOffset);
+            }
+            else {
+                telemetry.addData("Visible Target", "none");
+            }
+            telemetry.update();
+        }
+        if(vuforiaOffset == -100000000){
+            vuforiaOffset = 0;
+        }
+
+        // Disable Tracking when we are done;
+        targets.deactivate();
+        vuforia.close();
+
+        telemetry.addLine("initializing apriltags");
+        telemetry.update();
+
+
+
+
+
+
+
+
+        //initilaize the camera for the Apriltags
+        cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        APRILcamera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "ZoomCamera"), cameraMonitorViewId);
         aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
 
-        camera.setPipeline(aprilTagDetectionPipeline);
-        camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
+        telemetry.addLine("april");
+        telemetry.update();
+
+        APRILcamera.setPipeline(aprilTagDetectionPipeline);
+        APRILcamera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
         {
             @Override
             public void onOpened()
             {
-                camera.startStreaming(800,448, OpenCvCameraRotation.UPRIGHT);
+                APRILcamera.startStreaming(1280,720, OpenCvCameraRotation.UPSIDE_DOWN);
             }
 
             @Override
@@ -115,6 +258,9 @@ public class Jake_BlankAuto extends LinearOpMode {
         });
 
         telemetry.setMsTransmissionInterval(50);
+
+        telemetry.addLine("apriltags");
+        telemetry.update();
 
         // while init loop for the apriltags
         while (!isStarted() && !isStopRequested())
@@ -197,36 +343,22 @@ public class Jake_BlankAuto extends LinearOpMode {
             telemetry.update();
         }
 
-        /* Actually do something useful */
-        if(tagOfInterest == null || tagOfInterest.id == LEFT){
-            //trajectory
-        }else if(tagOfInterest.id == MIDDLE){
-            //trajectory
-        }else{
-            //trajectory
-        }
 
         //the auto loop
+        ODO.HeadingDEG = vuforiaOffset;
         while (opModeIsActive()) {
             ODO.OdoCalc(robot.MotorVL.getCurrentPosition(), robot.MotorHL.getCurrentPosition(), robot.MotorVR.getCurrentPosition());
 
             if(action == 1){
-                paraSet = 40;
-                perpSet = 0;
-                paraStart = 0;
-                perpStart = 0;
-
-                if(DirectionCalc.distanceFrom < 1 && oneloop){
-                    action = 1.5;
-                    oneloop = false;
+                if(tagOfInterest.id == 1){
+                    perpSet = -20;
+                }else if(tagOfInterest.id == 2){
+                    perpSet = 0;
                 }else{
-                    oneloop = true;
+                    perpSet = 20;
                 }
-
-            }else if(action == 1.5){
-                paraSet = 30;
-                perpSet = 0;
-                paraStart = 40;
+                paraSet = 20;
+                paraStart = 0;
                 perpStart = 0;
 
                 if(DirectionCalc.distanceFrom < 1 && oneloop){
@@ -235,115 +367,17 @@ public class Jake_BlankAuto extends LinearOpMode {
                 }else{
                     oneloop = true;
                 }
+
+            }else if(action == 2){
+
             }
-            else if(action == 2){
-                paraSet = 31;
-                perpSet = 42;
-                paraStart = 30;
-                perpStart = 0;
-                if(DirectionCalc.distanceFrom < 1 && oneloop){
-                    action = 3;
-                    oneloop = false;
-                }else{
-                    oneloop = true;
-                }
-            }else if(action == 3){
-                liftSet = 1480;
-                if(robot.MotorLift.getCurrentPosition() > 1400){
-                    action = 4;
-                }
-            }else if(action == 4){
-                speedSet = 5;
-                paraSet = 36;
-                perpSet = 42;
-                paraStart = 30;
-                perpStart = 42;
-                if(DirectionCalc.distanceFrom < 1 && oneloop){
-                    action = 4.5;
-                    oneloop = false;
-                    time1 = getRuntime();
-                }else{
-                    oneloop = true;
-                }
-            }else if(action == 4.5){
-                liftSet = 1350;
-                if(robot.MotorLift.getCurrentPosition() < 1370){
-                    action = 5;
-                }
-            }
-            else if(action == 5){
-                robot.IntakeS.setPower(-.5);
-                if(time1 + 2 < getRuntime()){
-                    action = 6;
-                    robot.IntakeS.setPower(0);
-                }
-            }else if(action == 6){
-                speedSet = 5;
-                paraSet = 31;
-                perpSet = 42;
-                paraStart = 36;
-                perpStart = 42;
-                if(DirectionCalc.distanceFrom < 1 && oneloop){
-                    action = 7;
-                    oneloop = false;
-                    time1 = getRuntime();
-                }else{
-                    oneloop = true;
-                }
-            }else if(action == 7){
-                liftSet = 0;
-                if(robot.MotorLift.getCurrentPosition() < 100){
-                    action = 8;
-                }
-            }else if(action == 8){
-                speedSet = 15;
-                if(tagOfInterest.id == 1) {
-                    paraSet = 30;
-                    perpSet = -20;
-                    paraStart = 31;
-                    perpStart = 42;
-                    if(DirectionCalc.distanceFrom < 1 && oneloop){
-                        action = 9;
-                        oneloop = false;
-                        time1 = getRuntime();
-                    }else{
-                        oneloop = true;
-                    }
-                }else if(tagOfInterest.id == 2){
-                    paraSet = 30;
-                    perpSet = 3;
-                    paraStart = 31;
-                    perpStart = 42;
-                    if(DirectionCalc.distanceFrom < 1 && oneloop){
-                        action = 9;
-                        oneloop = false;
-                        time1 = getRuntime();
-                    }else{
-                        oneloop = true;
-                    }
-                }else{
-                    paraSet = 30;
-                    perpSet = 28;
-                    paraStart = 31;
-                    perpStart = 42;
-                    if(DirectionCalc.distanceFrom < 1 && oneloop){
-                        action = 9;
-                        oneloop = false;
-                        time1 = getRuntime();
-                    }else{
-                        oneloop = true;
-                    }
-                }
-            }else{
-                break;
-            }
+
             Lift.LiftMethod(liftSet, liftSpeedSet, robot.MotorLift.getCurrentPosition(), getRuntime());
             Drivetrain(paraSet, perpSet, paraStart, perpStart, speedSet, rampUpDist, rampDownDist, headingSet, headingSpeedSet, ODO.ParaDist, ODO.PerpDist, ODO.HeadingDEG, getRuntime());
             robot.MotorVL.setPower(LLDIR);
             robot.MotorVR.setPower(LRDIR);
             robot.MotorHL.setPower(RLDIR);
             robot.MotorHR.setPower(RRDIR);
-            robot.MotorLift.setPower(Lift.liftpower);
 
             telemetry.addData("robot speed", SpeedClass.currentSpeed);
             telemetry.addData("FinalX", FinalX);
@@ -457,6 +491,20 @@ public class Jake_BlankAuto extends LinearOpMode {
         telemetry.addLine(String.format("Rotation Yaw: %.2f degrees", Math.toDegrees(detection.pose.yaw)));
         telemetry.addLine(String.format("Rotation Pitch: %.2f degrees", Math.toDegrees(detection.pose.pitch)));
         telemetry.addLine(String.format("Rotation Roll: %.2f degrees", Math.toDegrees(detection.pose.roll)));
+    }
+
+    /***
+     * Identify a target by naming it, and setting its position and orientation on the field
+     * @param targetIndex
+     * @param targetName
+     * @param dx, dy, dz  Target offsets in x,y,z axes
+     * @param rx, ry, rz  Target rotations in x,y,z axes
+     */
+    void    identifyTarget(int targetIndex, String targetName, float dx, float dy, float dz, float rx, float ry, float rz) {
+        VuforiaTrackable aTarget = targets.get(targetIndex);
+        aTarget.setName(targetName);
+        aTarget.setLocation(OpenGLMatrix.translation(dx, dy, dz)
+                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, rx, ry, rz)));
     }
 
 }

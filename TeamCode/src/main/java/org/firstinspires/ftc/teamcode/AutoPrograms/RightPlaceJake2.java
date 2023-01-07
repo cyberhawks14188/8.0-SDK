@@ -30,7 +30,6 @@ import org.firstinspires.ftc.teamcode.DriveCode.Smoothing;
 import org.firstinspires.ftc.teamcode.DriveCode.SpeedClass;
 import org.firstinspires.ftc.teamcode.Jake_2_Hardware;
 import org.firstinspires.ftc.teamcode.LiftClasses.LiftControl;
-import org.firstinspires.ftc.teamcode.TestHardware;
 import org.openftc.apriltag.AprilTagDetection;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
@@ -42,7 +41,7 @@ import java.util.List;
 @Config
 @Autonomous
 
-public class LeftSinglePlaceJake2 extends LinearOpMode {
+public class RightPlaceJake2 extends LinearOpMode {
 
     Jake_2_Hardware robot = new Jake_2_Hardware();
     OdometryCode ODO = new OdometryCode();
@@ -133,7 +132,7 @@ public class LeftSinglePlaceJake2 extends LinearOpMode {
         robot.init(hardwareMap);
 
         //Vuforia Targets here
-        webcamName = hardwareMap.get(WebcamName.class, "LeftFacingCamera");
+        webcamName = hardwareMap.get(WebcamName.class, "RightFacingCamera");
 
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
@@ -180,7 +179,7 @@ public class LeftSinglePlaceJake2 extends LinearOpMode {
 
 
         targets.activate();
-        while (vuforiatrigger == false && !isStopRequested()) {
+        while (vuforiatrigger == false && !isStopRequested() && !opModeIsActive()) {
             if(gamepad1.back){
                 vuforiatrigger = true;
             }
@@ -191,10 +190,10 @@ public class LeftSinglePlaceJake2 extends LinearOpMode {
                 if (((VuforiaTrackableDefaultListener)trackable.getListener()).isVisible()) {
                     telemetry.addData("Visible Target", trackable.getName());
                     targetVisible = true;
-                    if(trackable.getName() == "Red Audience Wall"){
-                        desiredVuforiaAngle = 150;
-                    }else if(trackable.getName() == "Blue Rear Wall"){
-                        desiredVuforiaAngle = -31;
+                    if(trackable.getName() == "Blue Audience Wall"){
+                        desiredVuforiaAngle = -152;
+                    }else if(trackable.getName() == "Red Rear Wall"){
+                        desiredVuforiaAngle = 28;
                     }
 
                     // getUpdatedRobotLocation() will return null if no new information is available since
@@ -364,14 +363,14 @@ public class LeftSinglePlaceJake2 extends LinearOpMode {
             if(action == 1){
                 liftSet = 825;
                 liftSpeedSet = 800;
-                paraSet = 36;
-                perpSet = 16;
-                headingSet = 25;
+                paraSet = 18.5;
+                perpSet = 4;
+                headingSet = -25;
                 paraStart = 0;
                 perpStart = 0;
-                headingSpeedSet = 50;
+                headingSpeedSet = 25;
 
-                if(DirectionCalc.distanceFrom < 1 && oneloop && Math.abs(HDing.headingError) < 5){
+                if(DirectionCalc.distanceFrom < 1 && oneloop && Math.abs(HDing.headingError) < 10){
                     action = 2;
                     oneloop = false;
                 }else{
@@ -379,58 +378,73 @@ public class LeftSinglePlaceJake2 extends LinearOpMode {
                 }
 
             }else if(action == 2){
-                liftSet = 725;
-                if(-robot.MotorLift.getCurrentPosition() < 740){
-                    action = 3;
-                    waitVariable = getRuntime();
-                }
-            }else if(action == 3){
-                intakePower = -.5;
-                if(waitVariable + 1 < getRuntime()){
-                    action = 4;
-                    intakePower = 0;
-                }
+                paraSet = 37;
+                perpSet = 1;
+                headingSet = -30;
+                paraStart = 18;
+                perpStart = 4;
+                headingSpeedSet = 25;
 
-            }else if(action == 4){
-                paraSet = 34;
-                perpSet = 4;
-                headingSet = 0;
-                paraStart = 36;
-                perpStart = 16;
                 if(DirectionCalc.distanceFrom < 1 && oneloop && Math.abs(HDing.headingError) < 5){
-                    action = 5;
+                    action = 3;
                     oneloop = false;
                 }else{
                     oneloop = true;
                 }
+
+            } else if(action == 3){
+                liftSet = 725;
+                if(-robot.MotorLift.getCurrentPosition() < 740){
+                    action = 4;
+                    waitVariable = getRuntime();
+                }
+            }else if(action == 4){
+                intakePower = -.5;
+                if(waitVariable + 1 < getRuntime()){
+                    action = 5;
+                    intakePower = 0;
+                }
+
             }else if(action == 5){
-                liftSet = 0;
-                paraSet = 56;
-                perpSet = 4;
+                paraSet = 36;
+                perpSet = 6;
                 headingSet = 0;
-                paraStart = 34;
-                perpStart = 4;
-                if(DirectionCalc.distanceFrom < 1 && oneloop && Math.abs(HDing.headingError) < 5){
+                paraStart = 38;
+                perpStart = 1;
+                if(DirectionCalc.distanceFrom < 1 && oneloop && Math.abs(HDing.headingError) < 10){
                     action = 6;
                     oneloop = false;
                 }else{
                     oneloop = true;
                 }
             }else if(action == 6){
-                paraSet = 56;
+                liftSet = 0;
+                paraSet = 54;
+                perpSet = 6;
                 headingSet = 0;
-                paraStart = 56;
-                perpStart = 4;
-                if(tagOfInterest.id == 1){
-                    perpSet = -14;
-                }else if(tagOfInterest.id == 2){
-                    perpSet = 4;
+                paraStart = 36;
+                perpStart = 6;
+                if(DirectionCalc.distanceFrom < 1 && oneloop && Math.abs(HDing.headingError) < 5){
+                    action = 7;
+                    oneloop = false;
                 }else{
-                    perpSet = 26;
+                    oneloop = true;
+                }
+            }else if(action == 7){
+                paraSet = 54;
+                headingSet = 0;
+                paraStart = 54;
+                perpStart = 6;
+                if(tagOfInterest.id == 1){
+                    perpSet = -18;
+                }else if(tagOfInterest.id == 2){
+                    perpSet = 6;
+                }else{
+                    perpSet = 30;
                 }
 
                 if(DirectionCalc.distanceFrom < 1 && oneloop && Math.abs(HDing.headingError) < 5){
-                    action = 7;
+                    action = 8;
                     oneloop = false;
                 }else{
                     oneloop = true;

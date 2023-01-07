@@ -6,6 +6,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.DriveCode.HeadingControl;
 import org.firstinspires.ftc.teamcode.DriveCode.OdometryCode;
 import org.firstinspires.ftc.teamcode.DriveCode.Smoothing;
@@ -22,10 +23,15 @@ public class Jake_2_TeleOp extends LinearOpMode {
     public static double VertOffset = 4.75;
     public static double zP = .0006;
     public static double zD = 0.002;
+    public static double LIFTP = .0003;
+    public static double LIFTSPEEDSET = 1500;
 
     double x, y, z;
     double finalX, finalY;
     double RLDIR, RRDIR, LRDIR, LLDIR;
+    double liftSpeedSet = 1500;
+    double lastIntakeSensor = 10;
+    boolean wasIntakeOpen = true;
 
     double vectorMagnitude = 0, vectorAngleRAD = 0, vectorAngleDEG = 0;
     double finalvectorAngleDEG = 0;
@@ -71,7 +77,12 @@ public class Jake_2_TeleOp extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
+            HDing.inTeleOp = true;
             lift.isJake2 = true;
+
+            lift.liftP = LIFTP;
+
+            //liftSpeedSet = LIFTSPEEDSET;
             SpeedClass.SpeedCalc(1,0, 0, 0, ODO.ParaDist, ODO.PerpDist, getRuntime());
 
             if( gamepad1.back){
@@ -98,24 +109,36 @@ public class Jake_2_TeleOp extends LinearOpMode {
 
 
             //lift code
-            liftcurrentpos = robot.MotorLift.getCurrentPosition();
+            liftcurrentpos = -robot.MotorLift.getCurrentPosition();
 
             if(gamepad1.dpad_down){
                 liftset = 0;
             }else if(gamepad1.dpad_left){
-                liftset = 680;
+                liftset = 500;
             }else if(gamepad1.dpad_right){
-                liftset = 1100;
-            }else if(gamepad1.dpad_up){
-                liftset = 1480;
+                liftset = 825;
+            }else if(gamepad1.dpad_up) {
+                liftset = 1125;
+            }else if(gamepad1.start){
+                liftset = 35;
             }else{
                 if(gamepad1.left_bumper){
-                    liftset += 25 * -gamepad1.right_stick_y;
+                    liftset += 15 * -gamepad1.right_stick_y;
                 }
             }
 
+            if(wasIntakeOpen == true && robot.IntakeV3.getDistance(DistanceUnit.INCH) < 1.5){
+                liftset = liftset + 50;
+                wasIntakeOpen = false;
+            }
+
+            if(robot.IntakeV3.getDistance(DistanceUnit.INCH) > 1.5){
+                wasIntakeOpen = true;
+            }
+
+
             if(gamepad1.x && lastx == false){
-                liftset = liftset - 100;
+                liftset = liftset - 75;
             }
 
             if(gamepad1.x){
@@ -125,7 +148,7 @@ public class Jake_2_TeleOp extends LinearOpMode {
             }
 
             if(gamepad1.y && lasty == false){
-                liftset = liftset + 100;
+                liftset = liftset + 75;
             }
 
             if(gamepad1.y){
@@ -134,8 +157,16 @@ public class Jake_2_TeleOp extends LinearOpMode {
                 lasty = false;
             }
 
+            if(liftset < liftcurrentpos){
+                liftSpeedSet = 800;
+            }else{
+                liftSpeedSet = 1500;
+            }
 
-            lift.LiftMethod(liftset, 1500, robot.MotorLift.getCurrentPosition(), getRuntime());
+
+
+
+            lift.LiftMethod(liftset, liftSpeedSet, liftcurrentpos, getRuntime());
 
 
             robot.MotorLift.setPower(lift.liftpower);
@@ -147,7 +178,7 @@ public class Jake_2_TeleOp extends LinearOpMode {
             }else if(gamepad1.b){
                 robot.IntakeS.setPower(-.5);
             }else{
-                robot.IntakeS.setPower(0.05);
+                robot.IntakeS.setPower(0.1);
             }
 
             //IMU drive code
@@ -185,19 +216,19 @@ public class Jake_2_TeleOp extends LinearOpMode {
             finalY = vectorMagnitude * Math.sin(Math.toRadians(finalvectorAngleDEG));
 
             if(gamepad1.right_bumper){
-                drivespeed = .6;
+                drivespeed = .4;
                 if(!gamepad1.left_bumper){
-                    headingsetpoint += gamepad1.right_stick_x * 3;
+                    headingsetpoint += gamepad1.right_stick_x * 2;
                 }
             }else if(gamepad1.right_trigger > .1) {
                 drivespeed = 1;
                 if(!gamepad1.left_bumper){
-                    headingsetpoint += gamepad1.right_stick_x * 14;
+                    headingsetpoint += gamepad1.right_stick_x * 10;
                 }
             }else{
                 drivespeed = .8;
                 if(!gamepad1.left_bumper){
-                    headingsetpoint += gamepad1.right_stick_x * 6;
+                    headingsetpoint += gamepad1.right_stick_x * 5;
                 }
             }
 
@@ -205,9 +236,14 @@ public class Jake_2_TeleOp extends LinearOpMode {
             HDing.headingD = zD;
 
 
-            HDing.HeadingMethod(headingsetpoint, 500, ODO.HeadingDEG, getRuntime());
+            HDing.HeadingMethod(headingsetpoint, 300, ODO.HeadingDEG, getRuntime());
 
             z = HDing.headingPower;
+            if(z > 1){
+                z = 1;
+            }else if (z < -1){
+                z = -1;
+            }
 
             LLDIR = -finalY + z;
             LRDIR = finalY + z;
@@ -232,6 +268,7 @@ public class Jake_2_TeleOp extends LinearOpMode {
             telemetry.addData("Left encoder RAW", robot.MotorVL.getCurrentPosition());
             telemetry.addData("back encoder RAW", robot.MotorHL.getCurrentPosition());
 
+            telemetry.addData("intake distance sensor", robot.IntakeV3.getDistance(DistanceUnit.INCH));
             telemetry.addData("speed", SpeedClass.currentSpeed);
             telemetry.addData("heading current speed", HDing.headingCurrentSpeed);
             telemetry.addData("inmotionprofile?", HDing.inmotionprofileheading);
@@ -243,6 +280,10 @@ public class Jake_2_TeleOp extends LinearOpMode {
             telemetry.addData("Encoder Para Left", robot.MotorVL.getCurrentPosition());
             telemetry.addData("Encoder Para Right", robot.MotorVR.getCurrentPosition());
             telemetry.addData("Encoder Perp", robot.MotorHL.getCurrentPosition());
+            dashboardTelemetry.addData("liftpos", liftcurrentpos);
+            dashboardTelemetry.addData("lift speed", lift.liftSpeed);
+            dashboardTelemetry.addData("lift set", liftset);
+            dashboardTelemetry.addData("lift power", lift.liftpower);
 
             telemetry.addData("IMU v", IMU);
             telemetry.addData("liftset", liftset);
