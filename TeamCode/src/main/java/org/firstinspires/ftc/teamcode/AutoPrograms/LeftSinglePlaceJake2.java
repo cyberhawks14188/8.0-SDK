@@ -178,11 +178,12 @@ public class LeftSinglePlaceJake2 extends LinearOpMode {
             ((VuforiaTrackableDefaultListener) trackable.getListener()).setCameraLocationOnRobot(parameters.cameraName, cameraLocationOnRobot);
         }
 
-
+        robot.AlignmentBar.setPosition(.65);
         targets.activate();
         while (vuforiatrigger == false && !isStopRequested()) {
             if(gamepad1.back){
                 vuforiatrigger = true;
+                robot.AlignmentBar.setPosition(.99);
             }
 
             // check all the trackable targets to see which one (if any) is visible.

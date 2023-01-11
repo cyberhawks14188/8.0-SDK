@@ -50,6 +50,9 @@ public class Jake_2_TeleOp extends LinearOpMode {
     boolean lastx = false;
     boolean lasty = false;
 
+    double alignmentBarSet = 0.99;
+    boolean lastStart = false;
+
 
 
 
@@ -106,7 +109,21 @@ public class Jake_2_TeleOp extends LinearOpMode {
             joystickButtons: FREE
             */
 
+            if(gamepad1.start && !lastStart){
+                lastStart = true;
+                if(alignmentBarSet != .65){
+                    alignmentBarSet = .65;
+                }else{
+                    alignmentBarSet = .99;
+                }
+            }
 
+            if(!gamepad1.start){
+                lastStart = false;
+            }
+
+
+            robot.AlignmentBar.setPosition(alignmentBarSet);
 
             //lift code
             liftcurrentpos = -robot.MotorLift.getCurrentPosition();
@@ -119,8 +136,6 @@ public class Jake_2_TeleOp extends LinearOpMode {
                 liftset = 825;
             }else if(gamepad1.dpad_up) {
                 liftset = 1125;
-            }else if(gamepad1.start){
-                liftset = 35;
             }else{
                 if(gamepad1.left_bumper){
                     liftset += 15 * -gamepad1.right_stick_y;
@@ -226,9 +241,9 @@ public class Jake_2_TeleOp extends LinearOpMode {
                     headingsetpoint += gamepad1.right_stick_x * 10;
                 }
             }else{
-                drivespeed = .8;
+                drivespeed = .7;
                 if(!gamepad1.left_bumper){
-                    headingsetpoint += gamepad1.right_stick_x * 5;
+                    headingsetpoint += gamepad1.right_stick_x * 4;
                 }
             }
 
@@ -264,6 +279,7 @@ public class Jake_2_TeleOp extends LinearOpMode {
             dashboardTelemetry.addData("headingSet", headingsetpoint);
             dashboardTelemetry.addData("heading Speed", HDing.headingCurrentSpeed);
             dashboardTelemetry.update();
+            telemetry.addData("aligment bar" ,alignmentBarSet);
             telemetry.addData("right encoder RAW", robot.MotorVR.getCurrentPosition());
             telemetry.addData("Left encoder RAW", robot.MotorVL.getCurrentPosition());
             telemetry.addData("back encoder RAW", robot.MotorHL.getCurrentPosition());

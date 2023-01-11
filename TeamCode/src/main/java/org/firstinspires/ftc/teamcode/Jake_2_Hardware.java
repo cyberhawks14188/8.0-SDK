@@ -5,6 +5,9 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.ServoImpl;
+import com.qualcomm.robotcore.hardware.ServoImplEx;
 
 public class Jake_2_Hardware {
     // Motors and Servos
@@ -14,6 +17,7 @@ public class Jake_2_Hardware {
     public DcMotor MotorHR;//port3
     public DcMotorEx MotorLift;
     public CRServo IntakeS;
+    public Servo AlignmentBar;
    /* public DistanceSensor Dist1;
     public DistanceSensor Dist2;
     public DistanceSensor Dist3;
@@ -63,6 +67,7 @@ public class Jake_2_Hardware {
         MotorHL = testhardware.get(DcMotorEx.class, "MotorHL");
         MotorHR = testhardware.get(DcMotorEx.class, "MotorHR");
         MotorLift = testhardware.get(DcMotorEx.class, "MotorLift");
+        AlignmentBar = testhardware.get(Servo.class, "AlignmentBar");
 
 
         MotorVL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
