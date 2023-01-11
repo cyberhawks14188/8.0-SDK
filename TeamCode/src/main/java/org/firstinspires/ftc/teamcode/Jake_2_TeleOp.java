@@ -6,7 +6,11 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.DriveCode.HeadingControl;
 import org.firstinspires.ftc.teamcode.DriveCode.OdometryCode;
 import org.firstinspires.ftc.teamcode.DriveCode.Smoothing;
@@ -52,6 +56,12 @@ public class Jake_2_TeleOp extends LinearOpMode {
 
     double alignmentBarSet = 0.99;
     boolean lastStart = false;
+    double IMUSpeedCurrent = 0;
+    boolean IMUSpeedTrigger = false;
+    double lastIMUSpeed = 0;
+    double lastTime = 0;
+    boolean lastIMUSpeedTrigger = false;
+    double IMUTimer = 10000;
 
 
 
@@ -79,36 +89,67 @@ public class Jake_2_TeleOp extends LinearOpMode {
 
         waitForStart();
 
+
         while (opModeIsActive()) {
+            //****** Basic variable setting for correct robot code ***************
             HDing.inTeleOp = true;
             lift.isJake2 = true;
-
-            lift.liftP = LIFTP;
-
-            //liftSpeedSet = LIFTSPEEDSET;
             SpeedClass.SpeedCalc(1,0, 0, 0, ODO.ParaDist, ODO.PerpDist, getRuntime());
+
+
+
+
+            //********* FTC DashBoard Stuff*************
+            lift.liftP = LIFTP;
+            ODO.PerpOffset = VertOffset;
+            ODO.TicksToInches = tickstoin;
+            ODO.TrackWidth = Trackwidth;
+            HDing.headingP = zP;
+            HDing.headingD = zD;
+
+
+
+
+            //*******IMU RESET ANGLE*******************
+
+            Orientation angles = robot.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+
+            IMUSpeedCurrent = (IMUSpeedCurrent - lastIMUSpeed)/(getRuntime() - lastTime);
+
+            if(IMUSpeedCurrent < 5){
+                IMUSpeedTrigger = true;
+                if(IMUSpeedTrigger && !lastIMUSpeedTrigger){
+                    IMUTimer = getRuntime() + .5;
+                }
+            }else{
+                IMUSpeedTrigger = false;
+                IMUTimer = getRuntime() + 100000;
+            }
+
+            if(IMUTimer < getRuntime()){
+                ODO.HeadingDEG = angles.firstAngle;
+            }
+
+            lastIMUSpeedTrigger = IMUSpeedTrigger;
+
+
+
+
+
+            //******** Manual Heading Reset *******************
 
             if( gamepad1.back){
                 ODO.HeadingRAD = Math.toRadians(0);
                 headingsetpoint = 0;
             }
-            ODO.PerpOffset = VertOffset;
-            ODO.TicksToInches = tickstoin;
-            ODO.TrackWidth = Trackwidth;
 
+
+            //*********Odometry Calculation*************
             ODO.OdoCalc(robot.MotorVL.getCurrentPosition(), robot.MotorHL.getCurrentPosition(), robot.MotorVR.getCurrentPosition());
 
-            /*
-            joysticks: used
-            dpad: used
-            bumpers: used
-            triggers: used
-            a/b/x/y: FREE
-            back: FREE
-            start: FREE
-            joystickButtons: FREE
-            */
 
+
+            //**********Alignemnt Bar Positioning************
             if(gamepad1.start && !lastStart){
                 lastStart = true;
                 if(alignmentBarSet != .65){
@@ -122,10 +163,13 @@ public class Jake_2_TeleOp extends LinearOpMode {
                 lastStart = false;
             }
 
-
             robot.AlignmentBar.setPosition(alignmentBarSet);
 
-            //lift code
+
+
+
+
+            //************ Lift Code ****************
             liftcurrentpos = -robot.MotorLift.getCurrentPosition();
 
             if(gamepad1.dpad_down){
@@ -142,14 +186,14 @@ public class Jake_2_TeleOp extends LinearOpMode {
                 }
             }
 
-            if(wasIntakeOpen == true && robot.IntakeV3.getDistance(DistanceUnit.INCH) < 1.5){
+           /* if(wasIntakeOpen == true && robot.IntakeV3.getDistance(DistanceUnit.INCH) < 1.5){
                 liftset = liftset + 50;
                 wasIntakeOpen = false;
             }
 
             if(robot.IntakeV3.getDistance(DistanceUnit.INCH) > 1.5){
                 wasIntakeOpen = true;
-            }
+            }*/
 
 
             if(gamepad1.x && lastx == false){
@@ -178,15 +222,11 @@ public class Jake_2_TeleOp extends LinearOpMode {
                 liftSpeedSet = 1500;
             }
 
-
-
-
             lift.LiftMethod(liftset, liftSpeedSet, liftcurrentpos, getRuntime());
-
 
             robot.MotorLift.setPower(lift.liftpower);
 
-            //intake code
+            //*********** Intake Code ***************
             
             if(gamepad1.a || gamepad1.left_trigger > .05){
                 robot.IntakeS.setPower(.5);
@@ -196,22 +236,11 @@ public class Jake_2_TeleOp extends LinearOpMode {
                 robot.IntakeS.setPower(0.1);
             }
 
-            //IMU drive code
 
-            /*Orientation angles = robot.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-
-
-            IMU = -angles.firstAngle;
-            if(IMU < 0){
-                IMU = IMU + 360;
-            }*/
-
-            //drive code
+            //*********** Drive Code ************************
 
             x = Smoothing.SmoothPerpendicularInput(Math.copySign( gamepad1.left_stick_x, gamepad1.left_stick_x));
-
             y = -Smoothing.SmoothParallelInput(Math.copySign( gamepad1.left_stick_y, gamepad1.left_stick_y));
-            //z = gamepad1.right_stick_x;
             if (vectorAngleDEG < 0) {
                 vectorAngleDEG = vectorAngleDEG + 360;
             }
@@ -222,13 +251,13 @@ public class Jake_2_TeleOp extends LinearOpMode {
             vectorAngleRAD = Math.atan2(y, x);//angle of the joystick inputs in Radians
             vectorAngleDEG = -Math.toDegrees(vectorAngleRAD);//converts that into degrees
 
-
             //Subtracts the heading angle to create the virtual forward
             finalvectorAngleDEG = vectorAngleDEG - ODO.HeadingDEG;
 
             //convert back into x and y values
             finalX = vectorMagnitude * Math.cos(Math.toRadians(finalvectorAngleDEG));
             finalY = vectorMagnitude * Math.sin(Math.toRadians(finalvectorAngleDEG));
+
 
             if(gamepad1.right_bumper){
                 drivespeed = .4;
@@ -247,10 +276,6 @@ public class Jake_2_TeleOp extends LinearOpMode {
                 }
             }
 
-            HDing.headingP = zP;
-            HDing.headingD = zD;
-
-
             HDing.HeadingMethod(headingsetpoint, 300, ODO.HeadingDEG, getRuntime());
 
             z = HDing.headingPower;
@@ -265,20 +290,22 @@ public class Jake_2_TeleOp extends LinearOpMode {
             RLDIR = -finalX + z;
             RRDIR = finalX + z;
 
-
-
-
-
-
             robot.MotorVL.setPower(LLDIR * drivespeed);
             robot.MotorVR.setPower(LRDIR * drivespeed);
             robot.MotorHL.setPower(RLDIR * drivespeed);
             robot.MotorHR.setPower(RRDIR * drivespeed);
 
+            //***************** Time for lift calc *************
+            lastTime = getRuntime();
+
+
+            //**************** Telemetry **********************
+
             dashboardTelemetry.addData("heading", ODO.HeadingDEG);
             dashboardTelemetry.addData("headingSet", headingsetpoint);
             dashboardTelemetry.addData("heading Speed", HDing.headingCurrentSpeed);
             dashboardTelemetry.update();
+            telemetry.addData("imu", angles.firstAngle);
             telemetry.addData("aligment bar" ,alignmentBarSet);
             telemetry.addData("right encoder RAW", robot.MotorVR.getCurrentPosition());
             telemetry.addData("Left encoder RAW", robot.MotorVL.getCurrentPosition());
@@ -308,6 +335,7 @@ public class Jake_2_TeleOp extends LinearOpMode {
 
 
             telemetry.update();
+
 
         }
     }

@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -8,6 +9,11 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoImpl;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
+
+import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 
 public class Jake_2_Hardware {
     // Motors and Servos
@@ -29,10 +35,10 @@ public class Jake_2_Hardware {
     public DistanceSensor IntakeV3;
 
 
-    /*BNO055IMU imu;
+    BNO055IMU imu;
 
     Orientation angles;
-    Acceleration gravity;*/
+    Acceleration gravity;
 
 
 
@@ -43,7 +49,7 @@ public class Jake_2_Hardware {
 
     public void init(HardwareMap testhardware){
 
-     /*   BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
         parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
         parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
@@ -56,7 +62,7 @@ public class Jake_2_Hardware {
         imu.initialize(parameters);
 
 
-        imu.startAccelerationIntegration(new Position(), new Velocity(), 100);*/
+        imu.startAccelerationIntegration(new Position(), new Velocity(), 100);
 
 
 
