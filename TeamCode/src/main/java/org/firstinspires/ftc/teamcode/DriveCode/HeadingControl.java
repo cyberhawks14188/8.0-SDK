@@ -19,6 +19,7 @@ public class HeadingControl {
     public double headingError = 0;
     public boolean inTeleOp = false;
 
+
     public void HeadingMethod(double headingsetpoint, double headingspeedsetpoint, double currentheading, double time){
         if(!Lift.isJake2){
             headingP = .00004;

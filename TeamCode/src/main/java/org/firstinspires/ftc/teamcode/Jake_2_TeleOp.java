@@ -113,7 +113,7 @@ public class Jake_2_TeleOp extends LinearOpMode {
             //*******IMU RESET ANGLE*******************
 
             Orientation angles = robot.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-
+/*
             IMUSpeedCurrent = (IMUSpeedCurrent - lastIMUSpeed)/(getRuntime() - lastTime);
 
             if(IMUSpeedCurrent < 5){
@@ -128,12 +128,13 @@ public class Jake_2_TeleOp extends LinearOpMode {
 
             if(IMUTimer < getRuntime()){
                 ODO.HeadingDEG = angles.firstAngle;
+                headingsetpoint = angles.firstAngle;
             }
 
             lastIMUSpeedTrigger = IMUSpeedTrigger;
 
 
-
+*/
 
 
             //******** Manual Heading Reset *******************

@@ -20,8 +20,8 @@ public class OdometryCode {
     double ChangePerpEncoder;
     double ChangeParaCombined = 0;
     double ChangePerpCombined = 0;
-    public double TicksToInches = 1775;
-    public double TrackWidth = 9.13;
+    public double TicksToInches = 1825;
+    public double TrackWidth = 8.35;
     public double PerpOffset = 4.75;
     double ChangeHeading = 0;
     public double HeadingRAD = 0;

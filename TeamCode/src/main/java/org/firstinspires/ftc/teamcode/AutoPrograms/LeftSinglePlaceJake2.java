@@ -10,6 +10,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -184,6 +185,19 @@ public class LeftSinglePlaceJake2 extends LinearOpMode {
             if(gamepad1.back){
                 vuforiatrigger = true;
                 robot.AlignmentBar.setPosition(.99);
+                robot.MotorVL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                robot.MotorVR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                robot.MotorHL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                robot.MotorHR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                robot.MotorLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                robot.MotorLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                robot.MotorVL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                robot.MotorVR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                robot.MotorHL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                robot.MotorHR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                ODO.ParaDist = 0;
+                ODO.PerpDist = 0;
+
             }
 
             // check all the trackable targets to see which one (if any) is visible.
